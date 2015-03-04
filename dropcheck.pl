@@ -43,7 +43,7 @@ while (1) {
 	my $outsuccessrate = $successrate * 100;
 	print ", success rate $outsuccessrate%";
 	print "\n";
-	if ($failcount > 4) {	# Failure threshold of 3 (or 6 seconds)
+	if ($failcount > 4) {	# Failure threshold of 5 (or 10 seconds)
 		$droptime = Time::HiRes::gettimeofday();
 		write_log("Failure threshold exceeded, internet connection presumed down, sending reset command to modem");
 		print "$datestring - FAILURE THRESHOLD EXCEEDED, RESETTING NOW\n";
@@ -54,7 +54,7 @@ while (1) {
 		$datestring = localtime();
 		$http = get("http://192.168.100.1/reset.htm");
 		print "$datestring - Reset command sent, entering downtime measure mode, waiting 60 seconds\n";
-		sleep(60); # Let's not hammer it with useless pings immediately; it will always take at least 60s to come back online (my fastest EVER was ~90s)
+		sleep(60); # Let's not hammer it with useless pings immediately; it will always take at least 60s to come back online (my fastest EVER was ~80s)
 		$total = $total + 12;
 		$totalfail = $totalfail + 12;	# We can assume 12 pings failed during this period.
 		$offline = 1;
