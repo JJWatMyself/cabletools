@@ -5,7 +5,7 @@ This is a perl script that detects a dropped internet connection before the cabl
 
 It requires a Motorola cable modem, or something else that will restart when anyone or anything behind the modem sends an HTTP GET to http://192.168.100.1/reset.htm, Net::Ping, LWP::Simple, Time::HiRes, and Sys::Syslog.
 
-It's a simple script that sends an ICMP ping every 3 seconds and counts the number of failures.  After 3 consecutive failures, it sends a HTTP GET to the cable modem's reset page.  It's intended to be run and left running.
+It's a simple script that sends an ICMP ping every 3 seconds and counts the number of failures.  After 5 consecutive failures, it sends a HTTP GET to the cable modem's reset page.  It's intended to be run and left running.
 
 It produces steady terminal output showing success/fail status, dropped packet count, and overall success rate.  Messages about connection status changes will be sent to a syslog server running on 127.0.0.1:514.
 
