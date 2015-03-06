@@ -20,3 +20,13 @@ Cable signal checker
 This script fetches the current cable signals from the modem, checks them against recommended values, and sends a syslog message to 127.0.0.1:514 if they're out of range.  It's intended to be run with a scheduled task or cron job.
 
 Terminal output is a list of the signal levels, along with their minimum, average, and maximum.  The script is configured for a modem with 8 DOCSIS channels down and 4 channels up, but that can be changed to any number.
+
+
+Availability
+=====================
+Shows the percentage of time the internet connection was available, based on a starting timestamp (that must be manually configured) and downtime.txt.  Requires the Math::Round package.
+
+
+Rainmeter skin
+=====================
+Displays the signal level from the first downstream channel.
