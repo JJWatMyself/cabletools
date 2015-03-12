@@ -54,9 +54,9 @@ while (1) {
 		$datestring = localtime();
 		$http = get("http://192.168.100.1/reset.htm");
 		print "$datestring - Reset command sent, entering downtime measure mode, waiting 60 seconds\n";
-		sleep(60); # Let's not hammer it with useless pings immediately; it will always take at least 60s to come back online (my fastest EVER was ~80s)
-		$total = $total + 12;
-		$totalfail = $totalfail + 12;	# We can assume 12 pings failed during this period.
+		sleep(30); # Let's not hammer it with useless pings immediately.
+		$total = $total + 6;
+		$totalfail = $totalfail + 6;	# We can assume 12 pings failed during this period.
 		$offline = 1;
 		while ($offline) {
 			$datestring = localtime();
