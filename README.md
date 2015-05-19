@@ -13,6 +13,10 @@ A log.txt file will be appended to (or created if it doesn't exist) every time t
 
 If you run a DDNS script, after the connection comes back online would be a good time to call it.
 
+PRTG Sensor
+=====================
+The PRTG sensor runs as a custom/advanced script to return XML formatted signal data from the cable modem.  I've included some default warning and error levels.  See the preview image to see what's available.
+
 
 Cable signal checker
 =====================
