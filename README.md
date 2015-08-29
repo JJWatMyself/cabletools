@@ -38,6 +38,10 @@ Displays the signal level from the first downstream channel.
 
 Supported cable modem models
 =====================
-Motorola SB6141
+* Motorola SB6141 (complete)
+* Motorola SB6121 (needs channels adjusted to 4 up and 1 down)
+* Motorola SB5100 (needs channels adjusted to 1 up and 1 down)
 
 Others might work immediately or with some configuration changes, especially using the right number of DOCSIS channels.  Others are completely different and none of the scripts will work.
+
+If you can get it working with your cable modem, open an issue and I'll add it to the supported list.
