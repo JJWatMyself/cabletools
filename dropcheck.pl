@@ -1,7 +1,21 @@
 #	Dropcheck.pl
 # 	version 0.2.1
-#	Homura Akemi / https://github.com/homura/cabletools
+#	Skylar Akemi / https://github.com/homura/cabletools
 #	Checks for a dropped connection that the modem doesn't notice, sends a reset command, and logs the length of time the connection is down
+#
+#	This program is free software: you can redistribute it and/or modify
+#	it under the terms of the GNU General Public License as published by
+#	the Free Software Foundation, either version 3 of the License, or
+#	(at your option) any later version.
+#
+#	This program is distributed in the hope that it will be useful,
+#	but WITHOUT ANY WARRANTY; without even the implied warranty of
+#	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#	GNU General Public License for more details.
+#
+#	You should have received a copy of the GNU General Public License
+#	along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#    
 use Net::Ping;
 use LWP::Simple;
 use Time::HiRes;
@@ -20,7 +34,10 @@ my $totalfail = 0;
 my $total = 0;
 my $successrate = 0;
 our $maincounter = 0;
-print colored("Testing colors!\n", "bold red");
+
+print colored("dropcheck.pl  Copyright (C) 2015  Skylar Akemi\n", "bold red");
+print "This program comes with ABSOLUTELY NO WARRANTY.  This is free software, and you are welcome to redistribute it under certain conditions.\n";
+
 write_log("Initialized internet drop checker");
 
 while (1) {

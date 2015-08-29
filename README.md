@@ -3,7 +3,7 @@ Internet Drop Checker
 
 This is a perl script that detects a dropped internet connection before the cable modem can notice something's fucky (if it ever does).  It was created in a fit of incoherent rage and may be contain more bugs than lines of working code.
 
-It requires a Motorola cable modem, or something else that will restart when anyone or anything behind the modem sends an HTTP GET to http://192.168.100.1/reset.htm, Net::Ping, LWP::Simple, Time::HiRes, and Sys::Syslog.
+It requires a Motorola cable modem, or something else that will restart when anyone or anything behind the modem sends an HTTP GET to http://192.168.100.1/reset.htm, Net::Ping, LWP::Simple, Time::HiRes, Sys::Syslog, Win32::Console::ANSI, and Term::ANSIScreen.  It must be run with administrative permissions to use ICMP.
 
 It's a simple script that sends an ICMP ping every 3 seconds and counts the number of failures.  After 5 consecutive failures, it sends a HTTP GET to the cable modem's reset page.  It's intended to be run and left running.
 
@@ -34,3 +34,10 @@ Shows the percentage of time the internet connection was available, based on a s
 Rainmeter skin
 =====================
 Displays the signal level from the first downstream channel.
+
+
+Supported cable modem models
+=====================
+Motorola SB6141
+
+Others might work immediately or with some configuration changes, especially using the right number of DOCSIS channels.  Others are completely different and none of the scripts will work.
