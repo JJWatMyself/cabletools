@@ -52,10 +52,10 @@ while (1) {
 		maincounter();
 	} else {
 		print colored("$multihost[$maincounter] is NOT ", "bold red");
-		maincounter();
 		$failcount = $failcount + 1;
 		$totalfail = $totalfail + 1;
-		write_log("Lost a ping packet!");
+		write_log("No ping response from " . $multihost[$maincounter]);
+		maincounter();
 	}
 	if ($totalfail == 0) {
 		$successrate = 1;
@@ -85,19 +85,24 @@ while (1) {
 		#$ua->referer("http://192.168.0.1/cmConfig.htm");
 		my $maxsize = (1024 * 1024 * 4);
 		$ua->max_size($maxsize);
-		my $response = $ua->get("http://192.168.100.1/reset.htm"); #
+		my $response = $ua->get("http://192.168.100.1/reset.htm");
 		if ($response->is_success) {
 			print "$datestring - Reset command sent, entering downtime measure mode, waiting 15 seconds\n";
-			sleep(15); # Let's not hammer it with useless pings immediately; it will always take at least 60s to come back online
+			sleep(15); # Let's not hammer it with useless pings immediately; it takes a while to come back online
 			$total = $total + 5;
 			$totalfail = $totalfail + 5;	# We can assume 5 pings failed during this period.
 			$offline = 1;
 		} else {
 			print colored("$datestring - CRITICAL: RESET COMMAND FAILED\n", "bold red");
 			write_log("Failed to send reset command to the modem");
-			sleep(15); # Let's not hammer it with useless pings immediately; it will always take at least 60s to come back online
+			my $response2 = $ua->get("http://192.168.100.1/reset.htm");	# Try again.
+			if ($response2->is_success) {
+				$datestring = localtime();
+				print "$datestring - Reset command sent, entering downtime measure mode, waiting 15 seconds\n";
+			}
+			sleep(15);
 			$total = $total + 5;
-			$totalfail = $totalfail + 5;	# We can assume 5 pings failed during this period.
+			$totalfail = $totalfail + 5;
 			$offline = 1;
 		}
 		while ($offline) {
