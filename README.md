@@ -15,7 +15,8 @@ If you run a DDNS script, after the connection comes back online would be a good
 
 PRTG Sensor
 =====================
-The PRTG sensor runs as a custom/advanced script to return XML formatted signal data from the cable modem.  I've included some default warning and error levels.  See the preview image to see what's available.
+The PRTG sensor runs as a custom/advanced script to return XML formatted signal data from the cable modem.  I've included some default warning and error levels.  
+![Preview](https://raw.githubusercontent.com/homura/cabletools/master/prtg-preview.png)
 
 
 Cable signal checker
@@ -33,7 +34,7 @@ Shows the percentage of time the internet connection was available, based on a s
 
 Rainmeter skin
 =====================
-Displays the signal level from the first downstream channel.
+Displays the signal level from the first downstream channel.  I no longer use or maintain this.
 
 
 Supported cable modem models
