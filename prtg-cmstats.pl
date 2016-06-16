@@ -1,5 +1,5 @@
 #	Returns XML formatted data from a motorola cable modem for PRTG
-#	Skylar Akemi / https://github.com/homura/cabletools
+#	Skylar Gasai / https://github.com/YandereSkylar/cabletools
 #
 #	This program is free software: you can redistribute it and/or modify
 #	it under the terms of the GNU General Public License as published by

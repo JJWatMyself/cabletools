@@ -1,6 +1,6 @@
 #	Dropcheck.pl
 # 	version 0.2.1
-#	Skylar Akemi / https://github.com/homura/cabletools
+#	Skylar Gasai / https://github.com/YandereSkylar/cabletools
 #	Checks for a dropped connection that the modem doesn't notice, sends a reset command, and logs the length of time the connection is down
 #
 #	This program is free software: you can redistribute it and/or modify
@@ -35,7 +35,7 @@ my $total = 0;
 my $successrate = 0;
 our $maincounter = 0;
 
-print colored("dropcheck.pl  Copyright (C) 2015  Skylar Akemi\n", "bold red");
+print colored("dropcheck.pl  Copyright (C) 2015  Skylar Gasai\n", "bold red");
 print "This program comes with ABSOLUTELY NO WARRANTY.  This is free software, and you are welcome to redistribute it under certain conditions.\n";
 
 write_log("Initialized internet drop checker");
