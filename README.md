@@ -16,7 +16,7 @@ If you run a DDNS script, after the connection comes back online would be a good
 PRTG Sensor
 =====================
 The PRTG sensor runs as a custom/advanced script to return XML formatted signal data from the cable modem.  I've included some default warning and error levels.  
-![Preview](https://raw.githubusercontent.com/homura/cabletools/master/prtg-preview.png)
+![Preview](https://raw.githubusercontent.com/YandereSkylar/cabletools/master/prtg-preview.png)
 
 
 Cable signal checker
