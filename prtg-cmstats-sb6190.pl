@@ -31,8 +31,6 @@ my $ua = LWP::UserAgent->new;
 
 
 my $content = $ua->get("http://192.168.100.1/cgi-bin/swinfo");
-#<td width="60%"><strong>Up Time</strong></td>
-#    		<td width="40%">4 d:  9 h: 56  m</td>
 $content->decoded_content =~ m/Up Time<\/strong><\/td>\n    		<td width="40%">(.+)<\/td>/;
 my $uptime = $1;
 print "<text> Up " . $uptime . "</text>\n";
