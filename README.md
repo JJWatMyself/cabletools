@@ -7,11 +7,13 @@ It requires a Motorola cable modem, or something else that will restart when any
 
 It's a simple script that sends an ICMP ping every 3 seconds and counts the number of failures.  After 5 consecutive failures, it sends a HTTP GET to the cable modem's reset page.  It's intended to be run and left running.
 
+The reset URL seems to be different for the Arris SB6190, so that isn't working yet.
+
 It produces steady terminal output showing success/fail status, dropped packet count, and overall success rate.  Messages about connection status changes will be sent to a syslog server running on 127.0.0.1:514.
 
 A log.txt file will be appended to (or created if it doesn't exist) every time the failure threshold is exceeded and a reset command is sent to the modem.  Downtime, measured in seconds, will be stored in the downtime.txt file and incremented after every interruption.
 
-If you run a DDNS script, after the connection comes back online would be a good time to call it.
+If you run a DDNS script, after the connection comes back online might be a good time to call it.
 
 PRTG Sensor
 =====================
@@ -39,6 +41,7 @@ Displays the signal level from the first downstream channel.  I no longer use or
 
 Supported cable modem models
 =====================
+* Arris SB6190 (complete sensor support with 16 downstream and 4 upstream channels, no reset on ping failure yet)
 * Motorola SB6141 (complete)
 * Motorola SB6121 (needs channels adjusted to 4 up and 1 down)
 * Motorola SB5100 (needs channels adjusted to 1 up and 1 down)
