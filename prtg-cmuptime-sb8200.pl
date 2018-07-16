@@ -43,7 +43,7 @@ my $uphours = $2;
 my $upmins = $3;
 my $upsecs = $4;
 #print "Up $updays d $uphours h $upmins m $upsecs s\n";
-#$uptime = $upsecs + ($upmins * 60) + ($uphours * 3600) + ($updays * 86400);
+$uptime = $upsecs + ($upmins * 60) + ($uphours * 3600) + ($updays * 86400);
 #print "<text> Up " . $uptime . "s</text>\n";
 
 print "<result>\n";
