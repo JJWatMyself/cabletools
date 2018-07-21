@@ -14,288 +14,380 @@
 #	You should have received a copy of the GNU General Public License
 #	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #    
-#   Updated by John Walshaw 7-15-2018 for SB8200 in DOCSIC 3.1 mode
+#   Forked by John Walshaw 7-15-2018 for SB8200
+#   This version is for modem with 29 channels down and 4 up
+#   https://regex101.com/r/9QdMIk/2
+#   References for thresholds
+#   https://pickmymodem.com/signal-levels-docsis-3-03-1-cable-modem/
+#   https://forums.xfinity.com/t5/Your-Home-Network/Xfinity-Internet-Connection-Troubleshooting-Tips/m-p/1253575#M94474
+#   https://arris.secure.force.com/consumers/articles/General_FAQs/SB8200-Troubleshooting-Internet-Connectivity/?l=en_US&fs=RelatedArticle
 use LWP::Simple;
 use Math::Round;
-use List::Util qw(sum);
-use List::Util qw( min max );
-use List::MoreUtils qw( minmax );
+use List::Util qw(min max sum);
 
 my @dpw;
 my @snr;
 my @uncor;
 my @upw;
+my @dlock;
+my @ulock;
 
-print '<?xml version="1.0" encoding="Windows-1252" ?>' . "\n";
-print "<prtg>\n";
-
-my $ua = LWP::UserAgent->new;
+#We need this in order to calculate averages
+sub mean {
+    return sum(@_)/@_;
+}
 
 # Set up for a 29-channel modem 4 upstream channels
 
+#We need this in order to use get
+my $ua = LWP::UserAgent->new;
 my $content = $ua->get("http://192.168.100.1/cmconnectionstatus.html");
-$content->decoded_content =~ m/Downstream Bonded Channels.*\n.*\n.*\n.*\n.*\n.*\n.*\n.*\n.*\n.*\n.*\n.*\n.*\n.*\n.*\n.*Hz<\/td>\n.*<td>(.*) dBmV<\/td>\n.*<td>(.*) dB<\/td>\n.*\n.*<td>(.*)<\/td>\n.*\n.*\n.*\n.*\n.*\n.*\n.*<td>(.*) dBmV<\/td>\n.*<td>(.*) dB<\/td>\n.*\n.*<td>(.*)<\/td>\n.*\n.*\n.*\n.*\n.*\n.*\n.*<td>(.*) dBmV<\/td>\n.*<td>(.*) dB<\/td>\n.*\n.*<td>(.*)<\/td>\n.*\n.*\n.*\n.*\n.*\n.*\n.*<td>(.*) dBmV<\/td>\n.*<td>(.*) dB<\/td>\n.*\n.*<td>(.*)<\/td>\n.*\n.*\n.*\n.*\n.*\n.*\n.*<td>(.*) dBmV<\/td>\n.*<td>(.*) dB<\/td>\n.*\n.*<td>(.*)<\/td>\n.*\n.*\n.*\n.*\n.*\n.*\n.*<td>(.*) dBmV<\/td>\n.*<td>(.*) dB<\/td>\n.*\n.*<td>(.*)<\/td>\n.*\n.*\n.*\n.*\n.*\n.*\n.*<td>(.*) dBmV<\/td>\n.*<td>(.*) dB<\/td>\n.*\n.*<td>(.*)<\/td>\n.*\n.*\n.*\n.*\n.*\n.*\n.*<td>(.*) dBmV<\/td>\n.*<td>(.*) dB<\/td>\n.*\n.*<td>(.*)<\/td>\n.*\n.*\n.*\n.*\n.*\n.*\n.*<td>(.*) dBmV<\/td>\n.*<td>(.*) dB<\/td>\n.*\n.*<td>(.*)<\/td>\n.*\n.*\n.*\n.*\n.*\n.*\n.*<td>(.*) dBmV<\/td>\n.*<td>(.*) dB<\/td>\n.*\n.*<td>(.*)<\/td>\n.*\n.*\n.*\n.*\n.*\n.*\n.*<td>(.*) dBmV<\/td>\n.*<td>(.*) dB<\/td>\n.*\n.*<td>(.*)<\/td>\n.*\n.*\n.*\n.*\n.*\n.*\n.*<td>(.*) dBmV<\/td>\n.*<td>(.*) dB<\/td>\n.*\n.*<td>(.*)<\/td>\n.*\n.*\n.*\n.*\n.*\n.*\n.*<td>(.*) dBmV<\/td>\n.*<td>(.*) dB<\/td>\n.*\n.*<td>(.*)<\/td>\n.*\n.*\n.*\n.*\n.*\n.*\n.*<td>(.*) dBmV<\/td>\n.*<td>(.*) dB<\/td>\n.*\n.*<td>(.*)<\/td>\n.*\n.*\n.*\n.*\n.*\n.*\n.*<td>(.*) dBmV<\/td>\n.*<td>(.*) dB<\/td>\n.*\n.*<td>(.*)<\/td>\n.*\n.*\n.*\n.*\n.*\n.*\n.*<td>(.*) dBmV<\/td>\n.*<td>(.*) dB<\/td>\n.*\n.*<td>(.*)<\/td>\n.*\n.*\n.*\n.*\n.*\n.*\n.*<td>(.*) dBmV<\/td>\n.*<td>(.*) dB<\/td>\n.*\n.*<td>(.*)<\/td>\n.*\n.*\n.*\n.*\n.*\n.*\n.*<td>(.*) dBmV<\/td>\n.*<td>(.*) dB<\/td>\n.*\n.*<td>(.*)<\/td>\n.*\n.*\n.*\n.*\n.*\n.*\n.*<td>(.*) dBmV<\/td>\n.*<td>(.*) dB<\/td>\n.*\n.*<td>(.*)<\/td>\n.*\n.*\n.*\n.*\n.*\n.*\n.*<td>(.*) dBmV<\/td>\n.*<td>(.*) dB<\/td>\n.*\n.*<td>(.*)<\/td>\n.*\n.*\n.*\n.*\n.*\n.*\n.*<td>(.*) dBmV<\/td>\n.*<td>(.*) dB<\/td>\n.*\n.*<td>(.*)<\/td>\n.*\n.*\n.*\n.*\n.*\n.*\n.*<td>(.*) dBmV<\/td>\n.*<td>(.*) dB<\/td>\n.*\n.*<td>(.*)<\/td>\n.*\n.*\n.*\n.*\n.*\n.*\n.*<td>(.*) dBmV<\/td>\n.*<td>(.*) dB<\/td>\n.*\n.*<td>(.*)<\/td>\n.*\n.*\n.*\n.*\n.*\n.*\n.*<td>(.*) dBmV<\/td>\n.*<td>(.*) dB<\/td>\n.*\n.*<td>(.*)<\/td>\n.*\n.*\n.*\n.*\n.*\n.*\n.*<td>(.*) dBmV<\/td>\n.*<td>(.*) dB<\/td>\n.*\n.*<td>(.*)<\/td>\n.*\n.*\n.*\n.*\n.*\n.*\n.*<td>(.*) dBmV<\/td>\n.*<td>(.*) dB<\/td>\n.*\n.*<td>(.*)<\/td>\n.*\n.*\n.*\n.*\n.*\n.*\n.*<td>(.*) dBmV<\/td>\n.*<td>(.*) dB<\/td>\n.*\n.*<td>(.*)<\/td>\n.*\n.*\n.*\n.*\n.*\n.*\n.*<td>(.*) dBmV<\/td>\n.*<td>(.*) dB<\/td>\n.*\n.*<td>(.*)<\/td>\n.*\n.*\n.*\n.*\n.*\n.*\n.*<td>(.*) dBmV<\/td>\n.*<td>(.*) dB<\/td>\n.*\n.*<td>(.*)<\/td>\n.*\n.*\n.*\n.*\n.*\n.*\n.*\n.*\n.*\n.*\n.*Upstream Bonded Channels.*\n.*\n.*\n.*\n.*\n.*\n.*\n.*\n.*\n.*\n.*\n.*\n.*\n.*\n.*\n.*\n.*\n.*<td>(.*) dBmV<\/td>\n.*\n.*\n.*\n.*\n.*\n.*\n.*\n.*<td>(.*) dBmV<\/td>\n.*\n.*\n.*\n.*\n.*\n.*\n.*\n.*<td>(.*) dBmV<\/td>\n.*\n.*\n.*\n.*\n.*\n.*\n.*\n.*<td>(.*) dBmV<\/td>\n<\/table>/;
-
-#my $test1 = $1;
-#my $test2 = $2;
-#my $ofdm = $29;
-#print "<text> Test " . $test1 . "</text>\n";
-#print "<text> Test " . $test2 . "</text>\n";
-#print "<text> OFDM " . $ofdm . "</text>\n";
+$content->decoded_content =~ m/Downstream Bonded Channels.*\n.*\n.*\n.*\n.*\n.*\n.*\n.*\n.*\n.*\n.*\n.*<tr>\n.*\n.*<td>(.*)<\/td>\n.*\n.*\n.*<td>(.*) dBmV<\/td>\n.*<td>(.*) dB<\/td>\n.*\n.*<td>(.*)<\/td>\n.*<\/tr>\n.*<tr>\n.*\n.*<td>(.*)<\/td>\n.*\n.*\n.*<td>(.*) dBmV<\/td>\n.*<td>(.*) dB<\/td>\n.*\n.*<td>(.*)<\/td>\n.*<\/tr>\n.*<tr>\n.*\n.*<td>(.*)<\/td>\n.*\n.*\n.*<td>(.*) dBmV<\/td>\n.*<td>(.*) dB<\/td>\n.*\n.*<td>(.*)<\/td>\n.*<\/tr>\n.*<tr>\n.*\n.*<td>(.*)<\/td>\n.*\n.*\n.*<td>(.*) dBmV<\/td>\n.*<td>(.*) dB<\/td>\n.*\n.*<td>(.*)<\/td>\n.*<\/tr>\n.*<tr>\n.*\n.*<td>(.*)<\/td>\n.*\n.*\n.*<td>(.*) dBmV<\/td>\n.*<td>(.*) dB<\/td>\n.*\n.*<td>(.*)<\/td>\n.*<\/tr>\n.*<tr>\n.*\n.*<td>(.*)<\/td>\n.*\n.*\n.*<td>(.*) dBmV<\/td>\n.*<td>(.*) dB<\/td>\n.*\n.*<td>(.*)<\/td>\n.*<\/tr>\n.*<tr>\n.*\n.*<td>(.*)<\/td>\n.*\n.*\n.*<td>(.*) dBmV<\/td>\n.*<td>(.*) dB<\/td>\n.*\n.*<td>(.*)<\/td>\n.*<\/tr>\n.*<tr>\n.*\n.*<td>(.*)<\/td>\n.*\n.*\n.*<td>(.*) dBmV<\/td>\n.*<td>(.*) dB<\/td>\n.*\n.*<td>(.*)<\/td>\n.*<\/tr>\n.*<tr>\n.*\n.*<td>(.*)<\/td>\n.*\n.*\n.*<td>(.*) dBmV<\/td>\n.*<td>(.*) dB<\/td>\n.*\n.*<td>(.*)<\/td>\n.*<\/tr>\n.*<tr>\n.*\n.*<td>(.*)<\/td>\n.*\n.*\n.*<td>(.*) dBmV<\/td>\n.*<td>(.*) dB<\/td>\n.*\n.*<td>(.*)<\/td>\n.*<\/tr>\n.*<tr>\n.*\n.*<td>(.*)<\/td>\n.*\n.*\n.*<td>(.*) dBmV<\/td>\n.*<td>(.*) dB<\/td>\n.*\n.*<td>(.*)<\/td>\n.*<\/tr>\n.*<tr>\n.*\n.*<td>(.*)<\/td>\n.*\n.*\n.*<td>(.*) dBmV<\/td>\n.*<td>(.*) dB<\/td>\n.*\n.*<td>(.*)<\/td>\n.*<\/tr>\n.*<tr>\n.*\n.*<td>(.*)<\/td>\n.*\n.*\n.*<td>(.*) dBmV<\/td>\n.*<td>(.*) dB<\/td>\n.*\n.*<td>(.*)<\/td>\n.*<\/tr>\n.*<tr>\n.*\n.*<td>(.*)<\/td>\n.*\n.*\n.*<td>(.*) dBmV<\/td>\n.*<td>(.*) dB<\/td>\n.*\n.*<td>(.*)<\/td>\n.*<\/tr>\n.*<tr>\n.*\n.*<td>(.*)<\/td>\n.*\n.*\n.*<td>(.*) dBmV<\/td>\n.*<td>(.*) dB<\/td>\n.*\n.*<td>(.*)<\/td>\n.*<\/tr>\n.*<tr>\n.*\n.*<td>(.*)<\/td>\n.*\n.*\n.*<td>(.*) dBmV<\/td>\n.*<td>(.*) dB<\/td>\n.*\n.*<td>(.*)<\/td>\n.*<\/tr>\n.*<tr>\n.*\n.*<td>(.*)<\/td>\n.*\n.*\n.*<td>(.*) dBmV<\/td>\n.*<td>(.*) dB<\/td>\n.*\n.*<td>(.*)<\/td>\n.*<\/tr>\n.*<tr>\n.*\n.*<td>(.*)<\/td>\n.*\n.*\n.*<td>(.*) dBmV<\/td>\n.*<td>(.*) dB<\/td>\n.*\n.*<td>(.*)<\/td>\n.*<\/tr>\n.*<tr>\n.*\n.*<td>(.*)<\/td>\n.*\n.*\n.*<td>(.*) dBmV<\/td>\n.*<td>(.*) dB<\/td>\n.*\n.*<td>(.*)<\/td>\n.*<\/tr>\n.*<tr>\n.*\n.*<td>(.*)<\/td>\n.*\n.*\n.*<td>(.*) dBmV<\/td>\n.*<td>(.*) dB<\/td>\n.*\n.*<td>(.*)<\/td>\n.*<\/tr>\n.*<tr>\n.*\n.*<td>(.*)<\/td>\n.*\n.*\n.*<td>(.*) dBmV<\/td>\n.*<td>(.*) dB<\/td>\n.*\n.*<td>(.*)<\/td>\n.*<\/tr>\n.*<tr>\n.*\n.*<td>(.*)<\/td>\n.*\n.*\n.*<td>(.*) dBmV<\/td>\n.*<td>(.*) dB<\/td>\n.*\n.*<td>(.*)<\/td>\n.*<\/tr>\n.*<tr>\n.*\n.*<td>(.*)<\/td>\n.*\n.*\n.*<td>(.*) dBmV<\/td>\n.*<td>(.*) dB<\/td>\n.*\n.*<td>(.*)<\/td>\n.*<\/tr>\n.*<tr>\n.*\n.*<td>(.*)<\/td>\n.*\n.*\n.*<td>(.*) dBmV<\/td>\n.*<td>(.*) dB<\/td>\n.*\n.*<td>(.*)<\/td>\n.*<\/tr>\n.*<tr>\n.*\n.*<td>(.*)<\/td>\n.*\n.*\n.*<td>(.*) dBmV<\/td>\n.*<td>(.*) dB<\/td>\n.*\n.*<td>(.*)<\/td>\n.*<\/tr>\n.*<tr>\n.*\n.*<td>(.*)<\/td>\n.*\n.*\n.*<td>(.*) dBmV<\/td>\n.*<td>(.*) dB<\/td>\n.*\n.*<td>(.*)<\/td>\n.*<\/tr>\n.*<tr>\n.*\n.*<td>(.*)<\/td>\n.*\n.*\n.*<td>(.*) dBmV<\/td>\n.*<td>(.*) dB<\/td>\n.*\n.*<td>(.*)<\/td>\n.*<\/tr>\n.*<tr>\n.*\n.*<td>(.*)<\/td>\n.*\n.*\n.*<td>(.*) dBmV<\/td>\n.*<td>(.*) dB<\/td>\n.*\n.*<td>(.*)<\/td>\n.*<\/tr>\n.*<tr>\n.*\n.*<td>(.*)<\/td>\n.*\n.*\n.*<td>(.*) dBmV<\/td>\n.*<td>(.*) dB<\/td>\n.*\n.*<td>(.*)<\/td>\n.*<\/tr>\n<\/table>\n.*\n.*\n.*\n.*\n.*\n.*\n.*\n.*\n.*Upstream Bonded Channels.*\n.*\n.*\n.*\n.*\n.*\n.*\n.*\n.*\n.*\n.*\n.*\n.*\n.*<td>(.+)<\/td>\n.*\n.*\n.*\n.*<td>(.*) dBmV<\/td>\n.*\n.*\n.*\n.*<td>(.+)<\/td>\n.*\n.*\n.*\n.*<td>(.*) dBmV<\/td>\n.*\n.*\n.*\n.*<td>(.+)<\/td>\n.*\n.*\n.*\n.*<td>(.*) dBmV<\/td>\n.*\n.*\n.*\n.*<td>(.+)<\/td>\n.*\n.*\n.*\n.*<td>(.*) dBmV<\/td>\n<\/table>/;
 
 # Downstream power level
-@dpw[1] = $1;
-@dpw[2] = $4;
-@dpw[3] = $7;
-@dpw[4] = $10;
-@dpw[5] = $13;
-@dpw[6] = $16;
-@dpw[7] = $19;
-@dpw[8] = $22;
-@dpw[9] = $25;
-@dpw[10] = $28;
-@dpw[11] = $31;
-@dpw[12] = $34;
-@dpw[13] = $37;
-@dpw[14] = $40;
-@dpw[15] = $43;
-@dpw[16] = $46;
-@dpw[17] = $49;
-@dpw[18] = $52;
-@dpw[19] = $55;
-@dpw[20] = $58;
-@dpw[21] = $61;
-@dpw[22] = $64;
-@dpw[23] = $67;
-@dpw[24] = $70;
-@dpw[25] = $73;
-@dpw[26] = $76;
-@dpw[27] = $79;
-@dpw[28] = $82;
-my $ofdm = $85;
-print "<result>\n";
-print "<channel>Downstream Power Level Average</channel>\n";
-print "<customUnit>dBmV</customUnit>\n";
-print "<float>1</float>\n";
-print "<LimitMode>1</LimitMode>\n";
-print "<LimitMaxWarning>8</LimitMaxWarning>\n";
-print "<LimitMaxError>15</LimitMaxError>\n";
-print "<LimitMinWarning>-4</LimitMinWarning>\n";
-print "<LimitMinError>-15</LimitMinError>\n";
-print "<LimitWarningMsg>Signal level out of recommended range.</LimitWarningMsg>\n";
-print "<LimitErrorMsg>Signal level out of recommended range.</LimitErrorMsg>\n";
-print "<value>" . nearest(0.1, mean(@dpw)) . "</value>\n";
-print "</result>\n";
+@dpw[1] = $2;
+@dpw[2] = $6;
+@dpw[3] = $10;
+@dpw[4] = $14;
+@dpw[5] = $18;
+@dpw[6] = $22;
+@dpw[7] = $26;
+@dpw[8] = $30;
+@dpw[9] = $34;
+@dpw[10] = $38;
+@dpw[11] = $42;
+@dpw[12] = $46;
+@dpw[13] = $50;
+@dpw[14] = $54;
+@dpw[15] = $58;
+@dpw[16] = $62;
+@dpw[17] = $66;
+@dpw[18] = $70;
+@dpw[19] = $74;
+@dpw[20] = $78;
+@dpw[21] = $82;
+@dpw[22] = $86;
+@dpw[23] = $90;
+@dpw[24] = $94;
+@dpw[25] = $98;
+@dpw[26] = $102;
+@dpw[27] = $106;
+@dpw[28] = $110;
+my $ofdm = $114;
 
-print "<result>\n";
-print "<channel>Downstream Power Level Minimum</channel>\n";
-print "<customUnit>dBmV</customUnit>\n";
-print "<float>1</float>\n";
-print "<LimitMode>1</LimitMode>\n";
-print "<LimitMaxWarning>8</LimitMaxWarning>\n";
-print "<LimitMaxError>15</LimitMaxError>\n";
-print "<LimitMinWarning>-4</LimitMinWarning>\n";
-print "<LimitMinError>-15</LimitMinError>\n";
-print "<LimitWarningMsg>Signal level out of recommended range.</LimitWarningMsg>\n";
-print "<LimitErrorMsg>Signal level out of recommended range.</LimitErrorMsg>\n";
-print "<value>" . nearest(0.1, min(@dpw)) . "</value>\n";
-print "</result>\n";
+# Downstream lock status
+@dlock[1] = $1;
+@dlock[2] = $5;
+@dlock[3] = $9;
+@dlock[4] = $13;
+@dlock[5] = $17;
+@dlock[6] = $21;
+@dlock[7] = $25;
+@dlock[8] = $29;
+@dlock[9] = $33;
+@dlock[10] = $37;
+@dlock[11] = $41;
+@dlock[12] = $45;
+@dlock[13] = $49;
+@dlock[14] = $53;
+@dlock[15] = $57;
+@dlock[16] = $61;
+@dlock[17] = $65;
+@dlock[18] = $69;
+@dlock[19] = $73;
+@dlock[20] = $77;
+@dlock[21] = $81;
+@dlock[22] = $85;
+@dlock[23] = $89;
+@dlock[24] = $93;
+@dlock[25] = $97;
+@dlock[26] = $101;
+@dlock[27] = $105;
+@dlock[28] = $109;
+@dlock[29] = $113;
+my $countdlock = grep { $_ eq 'Locked' } @dlock;
 
-print "<result>\n";
-print "<channel>Downstream Power Level Maximum</channel>\n";
-print "<customUnit>dBmV</customUnit>\n";
-print "<float>1</float>\n";
-print "<LimitMode>1</LimitMode>\n";
-print "<LimitMaxWarning>8</LimitMaxWarning>\n";
-print "<LimitMaxError>15</LimitMaxError>\n";
-print "<LimitMinWarning>-4</LimitMinWarning>\n";
-print "<LimitMinError>-15</LimitMinError>\n";
-print "<LimitWarningMsg>Signal level out of recommended range.</LimitWarningMsg>\n";
-print "<LimitErrorMsg>Signal level out of recommended range.</LimitErrorMsg>\n";
-print "<value>" . nearest(0.1, max(@dpw)) . "</value>\n";
-print "</result>\n";
-
-print "<result>\n";
-print "<channel>Download OFDM Power Level</channel>\n";
-print "<customUnit>dBmV</customUnit>\n";
-print "<float>1</float>\n";
-print "<LimitMode>1</LimitMode>\n";
-print "<LimitMaxWarning>8</LimitMaxWarning>\n";
-print "<LimitMaxError>15</LimitMaxError>\n";
-print "<LimitMinWarning>-4</LimitMinWarning>\n";
-print "<LimitMinError>-15</LimitMinError>\n";
-print "<LimitWarningMsg>Signal level out of recommended range.</LimitWarningMsg>\n";
-print "<LimitErrorMsg>Signal level out of recommended range.</LimitErrorMsg>\n";
-print "<value>" . nearest(0.1, $ofdm) . "</value>\n";
-print "</result>\n";
-
-# Downstream SNR level
-@snr[1] = $2;
-@snr[2] = $5;
-@snr[3] = $8;
-@snr[4] = $11;
-@snr[5] = $14;
-@snr[6] = $17;
-@snr[7] = $20;
-@snr[8] = $23;
-@snr[9] = $26;
-@snr[10] = $29;
-@snr[11] = $32;
-@snr[12] = $35;
-@snr[13] = $38;
-@snr[14] = $41;
-@snr[15] = $44;
-@snr[16] = $47;
-@snr[17] = $50;
-@snr[18] = $53;
-@snr[19] = $56;
-@snr[20] = $59;
-@snr[21] = $62;
-@snr[22] = $65;
-@snr[23] = $68;
-@snr[24] = $71;
-@snr[25] = $74;
-@snr[26] = $77;
-@snr[27] = $80;
-@snr[28] = $83;
-my $ofdmsnr = $86;
-
-print "<result>\n";
-print "<channel>Downstream SNR Average</channel>\n";
-print "<customUnit>dB</customUnit>\n";
-print "<float>1</float>\n";
-print "<LimitMode>1</LimitMode>\n";
-print "<LimitMinWarning>33</LimitMinWarning>\n";
-print "<LimitMinError>30</LimitMinError>\n";
-print "<LimitWarningMsg>Signal level out of recommended range.</LimitWarningMsg>\n";
-print "<LimitErrorMsg>Signal level out of recommended range.</LimitErrorMsg>\n";
-print "<value>" . nearest(0.1, mean(@snr)) . "</value>\n";
-print "</result>\n";
-
-print "<result>\n";
-print "<channel>Downstream SNR Minimum</channel>\n";
-print "<customUnit>dB</customUnit>\n";
-print "<float>1</float>\n";
-print "<LimitMode>1</LimitMode>\n";
-print "<LimitMinWarning>33</LimitMinWarning>\n";
-print "<LimitMinError>30</LimitMinError>\n";
-print "<LimitWarningMsg>Signal level out of recommended range.</LimitWarningMsg>\n";
-print "<LimitErrorMsg>Signal level out of recommended range.</LimitErrorMsg>\n";
-print "<value>" . nearest(0.1, min(@snr)) . "</value>\n";
-print "</result>\n";
-
-print "<result>\n";
-print "<channel>Downstream SNR Maximum</channel>\n";
-print "<customUnit>dB</customUnit>\n";
-print "<float>1</float>\n";
-print "<LimitMode>1</LimitMode>\n";
-print "<LimitMinWarning>33</LimitMinWarning>\n";
-print "<LimitMinError>30</LimitMinError>\n";
-print "<LimitWarningMsg>Signal level out of recommended range.</LimitWarningMsg>\n";
-print "<LimitErrorMsg>Signal level out of recommended range.</LimitErrorMsg>\n";
-print "<value>" . nearest(0.1, max(@snr)) . "</value>\n";
-print "</result>\n";
-
-print "<result>\n";
-print "<channel>Downstream OFDM SNR</channel>\n";
-print "<customUnit>dB</customUnit>\n";
-print "<float>1</float>\n";
-print "<LimitMode>1</LimitMode>\n";
-print "<LimitMinWarning>33</LimitMinWarning>\n";
-print "<LimitMinError>30</LimitMinError>\n";
-print "<LimitWarningMsg>Signal level out of recommended range.</LimitWarningMsg>\n";
-print "<LimitErrorMsg>Signal level out of recommended range.</LimitErrorMsg>\n";
-print "<value>" . nearest(0.1, $ofdmsnr) . "</value>\n";
-print "</result>\n";
-
-# Downstream uncorrectables
-@uncor[1] = $3;
-@uncor[2] = $6;
-@uncor[3] = $9;
-@uncor[4] = $12;
-@uncor[5] = $15;
-@uncor[6] = $18;
-@uncor[7] = $21;
-@uncor[8] = $24;
-@uncor[9] = $27;
-@uncor[10] = $30;
-@uncor[11] = $33;
-@uncor[12] = $36;
-@uncor[13] = $39;
-@uncor[14] = $42;
-@uncor[15] = $45;
-@uncor[16] = $48;
-@uncor[17] = $51;
-@uncor[18] = $54;
-@uncor[19] = $57;
-@uncor[20] = $60;
-@uncor[21] = $63;
-@uncor[22] = $66;
-@uncor[23] = $69;
-@uncor[24] = $72;
-@uncor[25] = $75;
-@uncor[26] = $78;
-@uncor[27] = $81;
-@uncor[28] = $84;
-@uncor[28] = $87;
-print "<result>\n";
-print "<channel>Downstream Uncorrectables Cummulative</channel>\n";
-print "<customUnit>dBmV</customUnit>\n";
-print "<float>1</float>\n";
-print "<LimitMode>1</LimitMode>\n";
-print "<LimitMaxWarning>100</LimitMaxWarning>\n";
-print "<LimitMaxError>1000</LimitMaxError>\n";
-#print "<LimitMinWarning>-4</LimitMinWarning>\n";
-#print "<LimitMinError>-15</LimitMinError>\n";
-print "<LimitWarningMsg>Uncorrectables detected. Reboot modem and continue to monitor.</LimitWarningMsg>\n";
-print "<LimitErrorMsg>Uncorrectables detected. Reboot modem and continue to monitor.</LimitErrorMsg>\n";
-print "<value>" . sum(0, @uncor) . "</value>\n";
-print "</result>\n";
+# Upstream lock status
+@ulock[1] = $117;
+@ulock[2] = $119;
+@ulock[3] = $121;
+@ulock[4] = $123;
+my $countulock = grep { $_ eq 'Locked' } @ulock;
 
 # Upstream power level
-@upw[0] = $88;
-@upw[1] = $89;
-@upw[2] = $90;
-@upw[3] = $91;
+@upw[0] = $118;
+@upw[1] = $120;
+@upw[2] = $122;
+@upw[3] = $124;
 
-print "<result>\n";
-print "<channel>Upstream Power Level Average</channel>\n";
-print "<customUnit>dBmV</customUnit>\n";
-print "<float>1</float>\n";
-print "<LimitMode>1</LimitMode>\n";
-print "<LimitMaxWarning>50</LimitMaxWarning>\n";
-print "<LimitMaxError>55</LimitMaxError>\n";
-print "<LimitWarningMsg>Signal level out of recommended range.</LimitWarningMsg>\n";
-print "<LimitErrorMsg>Signal level out of recommended range.</LimitErrorMsg>\n";
-print "<value>" . nearest(0.1, mean(@upw)) . "</value>\n";
-print "</result>\n";
+# Downstream uncorrectables
+@uncor[1] = $4;
+@uncor[2] = $8;
+@uncor[3] = $12;
+@uncor[4] = $16;
+@uncor[5] = $20;
+@uncor[6] = $24;
+@uncor[7] = $28;
+@uncor[8] = $32;
+@uncor[9] = $36;
+@uncor[10] = $40;
+@uncor[11] = $44;
+@uncor[12] = $48;
+@uncor[13] = $52;
+@uncor[14] = $56;
+@uncor[15] = $60;
+@uncor[16] = $64;
+@uncor[17] = $68;
+@uncor[18] = $72;
+@uncor[19] = $76;
+@uncor[20] = $80;
+@uncor[21] = $84;
+@uncor[22] = $88;
+@uncor[23] = $92;
+@uncor[24] = $96;
+@uncor[25] = $100;
+@uncor[26] = $104;
+@uncor[27] = $108;
+@uncor[28] = $112;
 
-print "<result>\n";
-print "<channel>Upstream Power Level Minimum</channel>\n";
-print "<customUnit>dBmV</customUnit>\n";
-print "<float>1</float>\n";
-print "<LimitMode>1</LimitMode>\n";
-print "<LimitMaxWarning>50</LimitMaxWarning>\n";
-print "<LimitMaxError>55</LimitMaxError>\n";
-print "<LimitWarningMsg>Signal level out of recommended range.</LimitWarningMsg>\n";
-print "<LimitErrorMsg>Signal level out of recommended range.</LimitErrorMsg>\n";
-print "<value>" . nearest(0.1, min(@upw)) . "</value>\n";
-print "</result>\n";
+# Downstream SNR level
+@snr[1] = $3;
+@snr[2] = $7;
+@snr[3] = $11;
+@snr[4] = $15;
+@snr[5] = $19;
+@snr[6] = $23;
+@snr[7] = $27;
+@snr[8] = $31;
+@snr[9] = $35;
+@snr[10] = $39;
+@snr[11] = $43;
+@snr[12] = $47;
+@snr[13] = $51;
+@snr[14] = $55;
+@snr[15] = $59;
+@snr[16] = $63;
+@snr[17] = $67;
+@snr[18] = $71;
+@snr[19] = $75;
+@snr[20] = $79;
+@snr[21] = $83;
+@snr[22] = $87;
+@snr[23] = $91;
+@snr[24] = $95;
+@snr[25] = $99;
+@snr[26] = $103;
+@snr[27] = $107;
+@snr[28] = $111;
+my $ofdmsnr = $115;
+#Not sure why min returns 0 when applied to @snr
+#Sorting seems to be the only way to identify the lowest value
+my @sortedsnr = sort { $a <=> $b } @snr;
 
-print "<result>\n";
-print "<channel>Upstream Power Level Maximum</channel>\n";
-print "<customUnit>dBmV</customUnit>\n";
-print "<float>1</float>\n";
-print "<LimitMode>1</LimitMode>\n";
-print "<LimitMaxWarning>50</LimitMaxWarning>\n";
-print "<LimitMaxError>55</LimitMaxError>\n";
-print "<LimitWarningMsg>Signal level out of recommended range.</LimitWarningMsg>\n";
-print "<LimitErrorMsg>Signal level out of recommended range.</LimitErrorMsg>\n";
-print "<value>" . nearest(0.1, max(@upw)) . "</value>\n";
-print "</result>\n";
+#Let's test the first match from the regex and verify it isn't a null
+#better to show no output if nulls result as otherwise zeros show in PRTG which is incorrect
+if (@dlock[1] ne "")
+{
+	print '<?xml version="1.0" encoding="Windows-1252" ?>' . "\n";
+	print "<prtg>\n";
+	print "<result>\n";
+	
+	# Downstream power level
 
-print "</prtg>";
+	print "<channel>Downstream Power Avg</channel>\n";
+	print "<customUnit>dBmV</customUnit>\n";
+	print "<float>1</float>\n";
+	print "<LimitMode>1</LimitMode>\n";
+	print "<LimitMaxWarning>8</LimitMaxWarning>\n";
+	print "<LimitMaxError>15</LimitMaxError>\n";
+	print "<LimitMinWarning>-8</LimitMinWarning>\n";
+	print "<LimitMinError>-15</LimitMinError>\n";
+	print "<LimitWarningMsg>Signal level out of spec</LimitWarningMsg>\n";
+	print "<LimitErrorMsg>Signal level out of spec, may not work</LimitErrorMsg>\n";
+	print "<value>" . nearest(0.1, mean(@dpw)) . "</value>\n";
+	print "</result>\n";
 
-sub mean {
-    return sum(@_)/@_;
+	print "<result>\n";
+	print "<channel>Downstream Power Min</channel>\n";
+	print "<customUnit>dBmV</customUnit>\n";
+	print "<float>1</float>\n";
+	print "<LimitMode>1</LimitMode>\n";
+	print "<LimitMaxWarning>8</LimitMaxWarning>\n";
+	print "<LimitMaxError>15</LimitMaxError>\n";
+	print "<LimitMinWarning>-8</LimitMinWarning>\n";
+	print "<LimitMinError>-15</LimitMinError>\n";
+	print "<LimitWarningMsg>Signal level out of spec</LimitWarningMsg>\n";
+	print "<LimitErrorMsg>Signal level out of spec, may not work</LimitErrorMsg>\n";
+	print "<value>" . nearest(0.1, min(@dpw)) . "</value>\n";
+	print "</result>\n";
+
+	print "<result>\n";
+	print "<channel>Downstream Power Max</channel>\n";
+	print "<customUnit>dBmV</customUnit>\n";
+	print "<float>1</float>\n";
+	print "<LimitMode>1</LimitMode>\n";
+	print "<LimitMaxWarning>8</LimitMaxWarning>\n";
+	print "<LimitMaxError>15</LimitMaxError>\n";
+	print "<LimitMinWarning>-8</LimitMinWarning>\n";
+	print "<LimitMinError>-15</LimitMinError>\n";
+	print "<LimitWarningMsg>Signal level out of spec</LimitWarningMsg>\n";
+	print "<LimitErrorMsg>Signal level out of spec, may not work</LimitErrorMsg>\n";
+	print "<value>" . nearest(0.1, max(@dpw)) . "</value>\n";
+	print "</result>\n";
+
+	print "<result>\n";
+	print "<channel>OFDM Power</channel>\n";
+	print "<customUnit>dBmV</customUnit>\n";
+	print "<float>1</float>\n";
+	print "<LimitMode>1</LimitMode>\n";
+	print "<LimitMaxWarning>8</LimitMaxWarning>\n";
+	print "<LimitMaxError>15</LimitMaxError>\n";
+	print "<LimitMinWarning>-8</LimitMinWarning>\n";
+	print "<LimitMinError>-15</LimitMinError>\n";
+	print "<LimitWarningMsg>Signal level out of spec</LimitWarningMsg>\n";
+	print "<LimitErrorMsg>Signal level out of spec, may not work</LimitErrorMsg>\n";
+	print "<value>" . nearest(0.1, $ofdm) . "</value>\n";
+	print "</result>\n";
+
+	# Downstream SNR level
+
+	print "<result>\n";
+	print "<channel>Downstream SNR Avg</channel>\n";
+	print "<customUnit>dB</customUnit>\n";
+	print "<float>1</float>\n";
+	print "<LimitMode>1</LimitMode>\n";
+	print "<LimitMinWarning>32.9</LimitMinWarning>\n";
+	print "<LimitMinError>29.9</LimitMinError>\n";
+	print "<LimitWarningMsg>SNR level below recommended range.</LimitWarningMsg>\n";
+	print "<LimitErrorMsg>SNR level below recommended range.</LimitErrorMsg>\n";
+	print "<value>" . nearest(0.1, mean(@snr)) . "</value>\n";
+	print "</result>\n";
+
+	print "<result>\n";
+	print "<channel>Downstream SNR Min</channel>\n";
+	print "<customUnit>dB</customUnit>\n";
+	print "<float>1</float>\n";
+	print "<LimitMode>1</LimitMode>\n";
+	print "<LimitMinWarning>32.9</LimitMinWarning>\n";
+	print "<LimitMinError>29.9</LimitMinError>\n";
+	print "<LimitWarningMsg>SNR level below recommended range.</LimitWarningMsg>\n";
+	print "<LimitErrorMsg>SNR level below recommended range.</LimitErrorMsg>\n";
+	#Not sure why min returns 0 when applied to @snr
+	#Sorting seems to be the only way to identify the lowest value
+	print "<value>" . nearest(0.1, @sortedsnr[1]) . "</value>\n";
+	print "</result>\n";
+
+	print "<result>\n";
+	print "<channel>Downstream SNR Max</channel>\n";
+	print "<customUnit>dB</customUnit>\n";
+	print "<float>1</float>\n";
+	print "<LimitMode>1</LimitMode>\n";
+	print "<LimitMinWarning>32.9</LimitMinWarning>\n";
+	print "<LimitMinError>29.9</LimitMinError>\n";
+	print "<LimitWarningMsg>SNR level below recommended range.</LimitWarningMsg>\n";
+	print "<LimitErrorMsg>SNR level below recommended range.</LimitErrorMsg>\n";
+	print "<value>" . nearest(0.1, max(@snr)) . "</value>\n";
+	print "</result>\n";
+
+	print "<result>\n";
+	print "<channel>OFDM SNR</channel>\n";
+	print "<customUnit>dB</customUnit>\n";
+	print "<float>1</float>\n";
+	print "<LimitMode>1</LimitMode>\n";
+	print "<LimitMinWarning>32.9</LimitMinWarning>\n";
+	print "<LimitMinError>29.9</LimitMinError>\n";
+	print "<LimitWarningMsg>SNR level below recommended range.</LimitWarningMsg>\n";
+	print "<LimitErrorMsg>SNR level below recommended range.</LimitErrorMsg>\n";
+	print "<value>" . nearest(0.1, $ofdmsnr) . "</value>\n";
+	print "</result>\n";
+
+	# Downstream uncorrectables
+
+	print "<result>\n";
+	print "<channel>Downstream Uncorrectables</channel>\n";
+	print "<unit>#</unit>\n";
+	print "<float>1</float>\n";
+	print "<LimitMode>1</LimitMode>\n";
+	print "<LimitMaxWarning>100</LimitMaxWarning>\n";
+	print "<LimitMaxError>10000</LimitMaxError>\n";
+	print "<LimitWarningMsg>Some uncorrectables detected. Reboot modem and continue to monitor.</LimitWarningMsg>\n";
+	print "<LimitErrorMsg>Many uncorrectables detected. Reboot modem and continue to monitor.</LimitErrorMsg>\n";
+	print "<value>" . sum(0, @uncor) . "</value>\n";
+	print "</result>\n";
+
+	# Upstream power level
+
+	print "<result>\n";
+	print "<channel>Upstream Power Avg</channel>\n";
+	print "<customUnit>dBmV</customUnit>\n";
+	print "<float>1</float>\n";
+	print "<LimitMode>1</LimitMode>\n";
+	print "<LimitMaxWarning>50</LimitMaxWarning>\n";
+	print "<LimitMaxError>55</LimitMaxError>\n";
+	print "<LimitMinWarning>34</LimitMinWarning>\n";
+	print "<LimitMinError>30</LimitMinError>\n";
+	print "<LimitWarningMsg>Signal level out of recommended range.</LimitWarningMsg>\n";
+	print "<LimitErrorMsg>Signal level out of recommended range.</LimitErrorMsg>\n";
+	print "<value>" . nearest(0.1, mean(@upw)) . "</value>\n";
+	print "</result>\n";
+
+	print "<result>\n";
+	print "<channel>Upstream Power Min</channel>\n";
+	print "<customUnit>dBmV</customUnit>\n";
+	print "<float>1</float>\n";
+	print "<LimitMode>1</LimitMode>\n";
+	print "<LimitMaxWarning>50</LimitMaxWarning>\n";
+	print "<LimitMaxError>55</LimitMaxError>\n";
+	print "<LimitMinWarning>34</LimitMinWarning>\n";
+	print "<LimitMinError>30</LimitMinError>\n";
+	print "<LimitWarningMsg>Signal level out of recommended range.</LimitWarningMsg>\n";
+	print "<LimitErrorMsg>Signal level out of recommended range.</LimitErrorMsg>\n";
+	print "<value>" . nearest(0.1, min(@upw)) . "</value>\n";
+	print "</result>\n";
+
+	print "<result>\n";
+	print "<channel>Upstream Power Max</channel>\n";
+	print "<customUnit>dBmV</customUnit>\n";
+	print "<float>1</float>\n";
+	print "<LimitMode>1</LimitMode>\n";
+	print "<LimitMaxWarning>50</LimitMaxWarning>\n";
+	print "<LimitMaxError>55</LimitMaxError>\n";
+	print "<LimitMinWarning>34</LimitMinWarning>\n";
+	print "<LimitMinError>30</LimitMinError>\n";
+	print "<LimitWarningMsg>Signal level out of recommended range.</LimitWarningMsg>\n";
+	print "<LimitErrorMsg>Signal level out of recommended range.</LimitErrorMsg>\n";
+	print "<value>" . nearest(0.1, max(@upw)) . "</value>\n";
+	print "</result>\n";
+
+	# Downstream lock status
+
+	print "<result>\n";
+	print "<channel>Downstream Locked Channels</channel>\n";
+	print "<unit>#</unit>\n";
+	print "<float>1</float>\n";
+	print "<LimitMode>1</LimitMode>\n";
+	print "<LimitMinWarning>28</LimitMinWarning>\n";
+	print "<LimitMinError>14</LimitMinError>\n";
+	print "<LimitWarningMsg>One or more channels not locked.</LimitWarningMsg>\n";
+	print "<LimitErrorMsg>More than half channels not locked.</LimitErrorMsg>\n";
+	print "<value>" . $countdlock . "</value>\n";
+	print "</result>\n";
+
+	# Upstream lock status
+
+	print "<result>\n";
+	print "<channel>Upstream Locked Channels</channel>\n";
+	print "<unit>#</unit>\n";
+	print "<float>1</float>\n";
+	print "<LimitMode>1</LimitMode>\n";
+	print "<LimitMinWarning>3</LimitMinWarning>\n";
+	print "<LimitMinError>2</LimitMinError>\n";
+	print "<LimitWarningMsg>One or more channels not locked.</LimitWarningMsg>\n";
+	print "<LimitErrorMsg>More than half channels not locked.</LimitErrorMsg>\n";
+	print "<value>" . $countulock . "</value>\n";print "</result>\n";
+	
+	# End of XML output
+	
+	print "</prtg>\n";
+
 }
